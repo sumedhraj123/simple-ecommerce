@@ -45,7 +45,7 @@ jobs:
               --image-ids imageTag=latest || true
     - name: 🧱 Build & Push Docker Image
       run: |
-          docker build --no-cache -t E-commerce-app .
+          docker build --no-cache -t e-commerce-app .
           docker tag simple-app:latest $ECR_REPO:latest
           docker push $ECR_REPO:latest
 
@@ -64,8 +64,8 @@ jobs:
 
       - name: 🧹 Clean old containers & images
         run: |
-          docker stop E-commerce-app || true
-          docker rm E-commerce-app || true
+          docker stop e-commerce-app || true
+          docker rm e-commerce-app || true
           docker rmi -f $(docker images $ECR_REPO:latest -q) || true
       - name: 🔓 Login to ECR again
         run: |
