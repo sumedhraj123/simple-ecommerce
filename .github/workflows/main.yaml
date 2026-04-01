@@ -34,21 +34,52 @@ jobs:
         | docker login \
         --username AWS \
         --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com  
-
     - name: Clean up workspace
       run: |
             rm -rf node_modules
             docker system prune -af
-
-
     - name: Delete old ECR image with same tag (if exists)
       run: |
               aws ecr batch-delete-image \
               --repository-name <your-repo-name> \
               --image-ids imageTag=latest || true
-
     - name: 🧱 Build & Push Docker Image
       run: |
-          docker build --no-cache -t simple-app .
+          docker build --no-cache -t E-commerce-app .
           docker tag simple-app:latest $ECR_REPO:latest
           docker push $ECR_REPO:latest
+
+  deploy:
+    name: 🚀 Deploy App from ECR
+    runs-on: [self-hosted, linux, x64]
+    needs: build
+
+    steps:
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+             aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🧹 Clean old containers & images
+        run: |
+          docker stop E-commerce-app || true
+          docker rm E-commerce-app || true
+          docker rmi -f $(docker images $ECR_REPO:latest -q) || true
+      - name: 🔓 Login to ECR again
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+      - name: 📥 Pull Latest Image
+        run: |
+          docker pull $ECR_REPO:latest
+      - name: 🚀 Run with Docker Compose
+        run: |
+          export IMAGE=$ECR_REPO:latest 
+      - name: 🚀 Run with Docker Compose
+        run: |
+          cd ./ # optional if docker-compose.yml is in root, otherwise cd into folder
+          export IMAGE=$ECR_REPO:latest
+          docker-compose up -d    
+          
+
