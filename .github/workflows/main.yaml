@@ -37,7 +37,7 @@ jobs:
 
     - name: Clean up workspace
       run: |
-            sudo rm -rf node_modules
+            rm -rf node_modules
             docker system prune -af
 
 
