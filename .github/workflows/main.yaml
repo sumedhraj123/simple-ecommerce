@@ -1,0 +1,22 @@
+name: Deploy E-commerce App
+
+on:
+  push:
+    branches: main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Stop old containers
+        run: docker-compose down || true
+
+      - name: Remove old images (optional)
+        run: docker system prune -af || true
+
+      - name: Build and start containers
+        run: docker-compose up -d --build
