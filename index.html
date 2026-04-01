@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>Simple Shop</title></head>
+<body>
+  <h1>Place Order</h1>
+
+  <input id="name" placeholder="Name"><br>
+  <input id="email" placeholder="Email"><br>
+  <input id="product" placeholder="Product"><br>
+
+  <button onclick="submitOrder()">Submit</button>
+
+  <script>
+    async function submitOrder() {
+      await fetch("/order", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          name: document.getElementById("name").value,
+          email: document.getElementById("email").value,
+          product: document.getElementById("product").value
+        })
+      });
+      alert("Order placed!");
+    }
+  </script>
+</body>
+</html>
