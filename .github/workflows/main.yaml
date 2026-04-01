@@ -10,8 +10,11 @@ env:
 
 jobs:
   build:
-    name: Build & Push to ECR
+    name: 🔨 Build & Push to ECR
     runs-on: [self-hosted, linux, x64]
+
+    outputs:
+      image_tag: ${{ steps.build.outputs.image_tag }}
 
     steps:
       - name: Checkout Source
@@ -34,14 +37,25 @@ jobs:
           --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
       - name: Clean workspace
-        run: |
-          rm -rf node_modules
+        run: rm -rf node_modules
 
       - name: 🧱 Build & Push Docker Image
+        id: build
         run: |
+          IMAGE_TAG=${{ github.sha }}
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
           docker build -t e-commerce-app .
+
+          # Tagging
           docker tag e-commerce-app:latest $ECR_REPO:latest
+          docker tag e-commerce-app:latest $ECR_REPO:$IMAGE_TAG
+
+          # Push
           docker push $ECR_REPO:latest
+          docker push $ECR_REPO:$IMAGE_TAG
 
   deploy:
     name: 🚀 Deploy App from ECR
