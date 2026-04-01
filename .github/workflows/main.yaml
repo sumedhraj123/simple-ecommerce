@@ -4,48 +4,42 @@ on:
   push:
     branches: main
 
-env:   
-  AWS_REGION: ${{ secrets.AWS_REGION }} 
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_REPO: ${{ secrets.ECR_REPO }}
 
-jobs: 
-  build: 
-    name: 🔨 Build & Push to ECR (Main) 
-    runs-on: [self-hosted, linux, x64]  
+jobs:
+  build:
+    name: 🔨 Build & Push to ECR
+    runs-on: [self-hosted, linux, x64]
 
-    steps: 
-    - name: Checkout Source 
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
 
-    - name: 🔐 Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-    
-    - name: 🔓 Login to Amazon ECR
-      env:
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-      run: |
-        aws ecr get-login-password --region $AWS_REGION \
-        | docker login \
-        --username AWS \
-        --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com  
-    - name: Clean up workspace
-      run: |
-            rm -rf node_modules
-            docker system prune -af
-    - name: Delete old ECR image with same tag (if exists)
-      run: |
-              aws ecr batch-delete-image \
-              --repository-name <your-repo-name> \
-              --image-ids imageTag=latest || true
-    - name: 🧱 Build & Push Docker Image
-      run: |
-          docker build --no-cache -t e-commerce-app .
+      - name: 🔓 Login to Amazon ECR
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login \
+          --username AWS \
+          --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Clean workspace
+        run: |
+          rm -rf node_modules
+
+      - name: 🧱 Build & Push Docker Image
+        run: |
+          docker build -t e-commerce-app .
           docker tag e-commerce-app:latest $ECR_REPO:latest
           docker push $ECR_REPO:latest
 
@@ -58,28 +52,29 @@ jobs:
       - name: 🔐 Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-             aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 🧹 Clean old containers & images
+      - name: 🧹 Clean old container
         run: |
           docker stop e-commerce-app || true
           docker rm e-commerce-app || true
-          docker rmi -f $(docker images $ECR_REPO:latest -q) || true
-      - name: 🔓 Login to ECR again
+
+      - name: 🔓 Login to ECR
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login \
+          --username AWS \
+          --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
       - name: 📥 Pull Latest Image
         run: |
           docker pull $ECR_REPO:latest
-      - name: 🚀 Run with Docker Compose
-        run: |
-          export IMAGE=$ECR_REPO:latest 
-      - name: 🚀 Run with Docker Compose
-        run: |
-          cd ./ # optional if docker-compose.yml is in root, otherwise cd into folder
-          export IMAGE=$ECR_REPO:latest
-          docker-compose up -d    
-          
 
+      - name: 🚀 Run with Docker Compose
+        run: |
+          export IMAGE=$ECR_REPO:latest
+          docker-compose up -d
