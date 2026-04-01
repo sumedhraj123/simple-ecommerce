@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head><title>Simple Shop</title></head>
+<head>
+  <title>Simple Shop</title>
+</head>
 <body>
   <h1>Place Order</h1>
 
@@ -12,16 +14,27 @@
 
   <script>
     async function submitOrder() {
-      await fetch("/order", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          name: document.getElementById("name").value,
-          email: document.getElementById("email").value,
-          product: document.getElementById("product").value
-        })
-      });
-      alert("Order placed!");
+      try {
+        const response = await fetch("/order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            product: document.getElementById("product").value
+          })
+        });
+
+        if (response.ok) {
+          alert("Order placed!");
+        } else {
+          alert("Failed to place order");
+        }
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
     }
   </script>
 </body>
