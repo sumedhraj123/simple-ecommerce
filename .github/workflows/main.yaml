@@ -46,7 +46,7 @@ jobs:
     - name: 🧱 Build & Push Docker Image
       run: |
           docker build --no-cache -t e-commerce-app .
-          docker tag simple-app:latest $ECR_REPO:latest
+          docker tag e-commerce-app:latest $ECR_REPO:latest
           docker push $ECR_REPO:latest
 
   deploy:
