@@ -7,11 +7,12 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files (if you use /public later)
+// Serve static files (optional)
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Root route - serve your UI
+// ✅ Root route - serve UI
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
@@ -21,36 +22,39 @@ app.get("/health", (req, res) => {
   res.status(200).send("healthy");
 });
 
-// ✅ Create order
+// ✅ Create order (FIXED & IMPROVED)
 app.post("/order", async (req, res) => {
   try {
+    console.log("Incoming request:", req.body);
+
     const { name, email, product } = req.body;
 
     if (!name || !email || !product) {
-      return res.status(400).send({ error: "All fields are required" });
+      return res.status(400).json({ error: "All fields are required" });
     }
 
-    const result = await db.insertOrder({ name, email, product });
-    res.send({ message: "Order saved!", result });
+    await db.insertOrder({ name, email, product });
+
+    res.status(200).json({ message: "Order placed successfully" });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: "Failed to save order" });
+    console.error("DB ERROR:", err);
+    res.status(500).json({ error: "Failed to save order" });
   }
 });
 
-// ✅ Get orders
+// ✅ Get all orders
 app.get("/orders", async (req, res) => {
   try {
     const orders = await db.getOrders();
-    res.send(orders);
+    res.status(200).json(orders);
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: "Failed to fetch orders" });
+    console.error("FETCH ERROR:", err);
+    res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
 
-// ✅ Use env port (best for Docker) OR fallback to 80
+// ✅ Port config (Docker friendly)
 const PORT = process.env.PORT || 80;
 
 app.listen(PORT, () => {
