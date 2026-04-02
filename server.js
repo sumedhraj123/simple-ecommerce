@@ -1,3 +1,4 @@
+runner@ip-10-0-138-199:~/simple-ecommerce$ cat server.js
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -11,8 +12,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ✅ Root route (FIX for health check)
 app.get("/", (req, res) => {
-  res.send("OK"); // or serve HTML if you want
-  // res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "index.html")); 
 });
 
 // ✅ Optional health endpoint (best practice)
@@ -46,3 +46,4 @@ const PORT = 80;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
