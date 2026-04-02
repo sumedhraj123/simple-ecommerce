@@ -1,20 +1,31 @@
-const { MongoClient } = require("mongodb");
+const mysql = require("mysql2/promise");
 
-const url = "mongodb://db:27017";
-const client = new MongoClient(url);
-const dbName = "ecommerce";
+// Create connection pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
-async function connect() {
-  await client.connect();
-  return client.db(dbName);
-}
-
+// Insert order
 exports.insertOrder = async (data) => {
-  const db = await connect();
-  return db.collection("orders").insertOne(data);
+  const { name, email, product } = data;
+
+  const query = `
+    INSERT INTO orders (name, email, product)
+    VALUES (?, ?, ?)
+  `;
+
+  const [result] = await pool.execute(query, [name, email, product]);
+  return result;
 };
 
+// Get all orders
 exports.getOrders = async () => {
-  const db = await connect();
-  return db.collection("orders").find().toArray();
+  const [rows] = await pool.execute("SELECT * FROM orders");
+  return rows;
 };
