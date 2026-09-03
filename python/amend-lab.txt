@@ -1,0 +1,2 @@
+Payment feature enabled
+Payment security enabled
