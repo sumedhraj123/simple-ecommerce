@@ -1,2 +1,3 @@
 User profile feature
 Profile validation enabled
+Profile message updated
