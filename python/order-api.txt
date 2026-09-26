@@ -1,1 +1,2 @@
 Order API enabled
+Order validation enabled
